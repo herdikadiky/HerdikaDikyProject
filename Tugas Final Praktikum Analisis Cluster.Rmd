@@ -1,0 +1,495 @@
+---
+title: "Pengelompokan Jumlah Pengguna Internet Berdasarkan Jenjang Pendidikan di Indonesia dengan Metode *K-Means Clustering*"
+author:
+- Herdika Diky Anto
+- NIM. 195090507111047
+- Komputasi Statistika F
+- Universitas Brawijaya
+date: "Jakarta, May 18th 2022"
+output:
+  prettydoc::html_pretty:
+    theme: tactile
+    highlight: github
+    toc: true
+    number_sections: true
+---
+
+```{r include=FALSE}
+library(knitr)
+opts_chunk$set(message = FALSE)
+opts_chunk$set(warning = FALSE)
+opts_chunk$set(comment = "")
+opts_chunk$set(collapse = TRUE)
+opts_chunk$set(error = TRUE)
+opts_chunk$set(prompt = FALSE)
+opts_chunk$set(fig.align = 'center')
+```
+# PENDAHULUAN
+
+##  Latar Belakang
+
+Di era globalisasi saat ini, ilmu pengetahuan dan teknologi berkembang dengan begitu pesat. Salah satu akibat dari berkembangnya teknologi yang semakin canggih adalah meluasnya penggunaan internet. Namun masih ada kesenjangan digital yang kuat antara anak dan remaja yang tinggal di wilayah perkotaan (lebih sejahtera) di Indonesia, dengan mereka yang tinggal di wilayah pedesaan (dan kurang sejahtera). Panji (dalam Amalia & Sumargo, 2019: 1) menjelaskan bahwa, di daerah perkotaan, hanya 13 persen dari anak dan remaja yang tidak menggunakan internet, sementara di daerah pedesaan ada 87 persen anak dan remaja yang tidak memakai internet.
+
+Oleh karena itu, perlu mengelompokkan provinsi berdasarkan persentase siswa umur 5-24 tahun yang mengakses internet selama 3 bulan terakhir menurut jenjang pendidikan. Pengelompokan dilakukan untuk mengetahui provinsi-provinsi mana yang memiliki **infrastruktur baik untuk mendukung penggunaan internet** dan provinsi-provinsi mana yang perlu dilakukan **perbaikan infrastruktur untuk mendukung penggunaan internet** pada masyarakat, maka akan dilakukan pengelompokan provinsi berdasarkan Persentase Pengguna Internet menurut Jenjang Pendidikan dengan Metode *K-Means Clustering*.
+
+Untuk memenuhi penilaian akhir praktikum mata kuliah Komputasi Statistika, maka akan dilakukan pengelompokan provinsi berdasarkan Presentase Pengguna Internet menurut Jenjang Pendidikan dengan Metode ***K-Means Clustering*** menggunakan bantuan *software* R-Studio (***R Version 4.1.1***) dalam pengerjaannya.
+
+## Analisis *Cluster*
+
+Analisis *cluster* merupakan salah satu analisis multivariat yang mengelompokan objek-objek atau data ke dalam beberapa kelompok dimana setiap objek dalam satu kelompok memiliki karakteristik yang sama. 
+
+Suatu *cluster* dikatakan *cluster* yang baik jika memiliki ciri-ciri sebagai berikut (Amalia & Sumargo, 2019: 2):
+
+1. **Homogenitas internal** (*within-cluster*), yaitu memiliki tingkat kesamaan yang tinggi antar anggota dalam satu *cluster*.
+2. **Heterogenitas eksternal** (*between-cluster*), yaitu memiliki tingkat perbedaan yang tinggi antar *cluster* yang satu dengan *cluster* yang lain.
+
+*Clustering* banyak digunakan pada dalam kehidupan sehari-hari seperti pada *business intelligence*, pengenalan pola citra, *web search*, bidang ilmu biologi, dan untuk keamanan (*security*). Di dalam *business intelligence*, *clustering* bisa mengatur banyak customer ke dalam banyaknya kelompok (*customer segmentation*).
+
+## Metode Analisis *Cluster*
+Terdapat beberapa metode analisis *cluster*, yaitu: 
+
+### Metode Hierarki
+
+Pengelompokan dengan metode hirarki dimulai dengan mengelompokan dua atau lebih objek yang mempunyai kesamaan paling dekat.
+
+Hasil pengelompokan metode hirarki membentuk sebuah dendogram yang digunakan untuk membantu menjelaskan proses hirarki tersebut. Metode hirarki terbagi menjadi dua (Prabowo *et al*, 2020: 50) :
+
+1. Pengelompokan metode ***Agglomerative*** dimulai dengan menganggap setiap objek sebagai sebuah *cluster*. Kemudian dua objek dengan jarak terdekat digabungakan menjadi satu *cluster* baru dan seterusnya. 
+2. Pengelompokan metode ***Divisive*** dimulai dari satu *cluster* besar yang terdiri dari semua objek. Kemudian dua objek dengan jarak terjauh atau nilai ketidakmiripannya tertinggi akan dipisahkan dan membentuk *cluster* yang lebih kecil dan demikian seterusnya. 
+
+### Metode Non-Hierarki
+
+Metode Non-Hierarki umumnya digunakan jika jumlah satuan pengamatan besar.
+Berbeda dengan metode hirarki, proses metode non-hirarki dimulai dengan menentukan jumlah *cluster* yang diinginkan terlebih dahulu. Setelah jumlah *cluster* ditentukan, maka proses pengelompokan dilakukan tanpa mengikuti proses hirarki. Contoh dari metode ini adalah ***K-means clustering***.
+
+#### *K-Means Clustering*
+*K-Means clustering* adalah mengelompokkan data/objek dengan memaksimalkan kemiripan data dalam satu *cluster* dan meminimalkan kemiripan data antar *cluster*. Ukuran kemiripan yang digunakan dalam *k-means clustering* adalah ukuran jarak (Amalia & Sumargo, 2019: 4).
+
+# METODE PENELITIAN
+
+Pada bab ini, kita menggunakan dua *packages* yaitu **`cluster`** dan **`factoextra`** untuk perhitungan dan visualisasi *cluster*-nya. Kemudian, dilanjutkan memulai menyiapkan data yang digunakan untuk *Clustering Analysis*.
+
+## *Packages* atau *Library* yang Dibutuhkan
+
+Berikut merupakan dua *packages* utama yang dibutuhkan dalam penyelesaian tugas kali ini.
+```{r, comment=""}
+library(cluster)
+library(factoextra)
+```
+Untuk detail lengkap dari dua *packages* diatas, sebagai berikut:
+
+* **`cluster`** untuk perhitungan atau komputasi algoritma *clustering*
+* **`factoextra`** untuk visualisasi hasil dari *clustering*
+
+*Packages* **`factoextra`** berisi banyak *functions* untuk kebutuhan analisis *cluster* dan visualisasinya, antara lain:
+
+| *Functions*                   |   Deskripsi                                                   |
+|:------------------------------|:--------------------------------------------------------------|
+| *dist(fviz_dist, get_dist)*   | Komputasi Jarak Matriks dan Visualisasi                       |
+| *get_clust_tendency*          | Menilai Banyaknya *Clustering*                                |
+| *fviz_nbclust(fviz_gap_stat)* | Menentukan Jumlah Optimal *Cluster*                           |
+| *fviz_dend*                   | Meningkatkan Visualisasi Dendogram                            |
+| *fviz_cluster*                | Memvisualisasikan Hasil *Clustering*                          |
+| *fviz_mclust*                 | Memvisualisasikan Hasil Model *Clustering*                    |
+| *fviz_silhouette*             | Memvisualisasikan Bentuk *Silhouette* dari *Clustering*       |
+| *hcut*                        | Menghitung *Clustering* Hirarki dan Memotong Jumlah *Cluster* |
+| *hkmeans*                     | *Clustering* untuk K-Means Hirarki                            |
+| *eclust*                      | Memvisualisasikan Penyebaran *Cluster*                        |
+Table: **Tabel 1.** ***Functions*** **dari** ***Packages*** **`factoextra`**
+
+## Data
+
+Data yang digunakan dalam tugas ini diperoleh melalui bagian pusat data dan sarana informatika (PDSI) Kementerian Komunikasi dan Informatika Republik Indonesia yang berupa data persentase siswa umur 5-24 tahun yang mengakses internet selama 3 Bulan terakhir menurut Provinsi dan Jenjang Pendidikan, 2017 data perkotaan & pedesaan (Amalia & Sumargo, 2019: 5).
+
+Data tersebut bersumber dari [Pengelompokan Pengguna Internet dengan Metode *K-Means Clustering*](https://doi.org/10.21009/JSA.03101).
+Data-data tersebut berisi data persentase jumlah pengguna internet berpendidikan SD, SMP, SMA dan Perguruan tinggi yang akan dijadikan variabel dalam tugas ini.
+Untuk men*download* dataset [disini](https://herdikadiky.files.wordpress.com/2022/05/data-jumlah-persentase-pengguna-internet-berpendidikan-sd-smp-sma-dan-perguruan-tinggi-pt-per-provinsi-2017.pdf).
+
+### Persiapan Data
+
+Data tersebut disajikan dalam tabel berikut:
+```{r, comment=""}
+library(readxl)
+datapenggunainternet <- read_excel("D:/Mata Kuliah Semester VI/Komputasi Statistika/Praktikum Komstat/Tugas Akhir Praktikum Analisis Cluster/Analisis Cluster Data Internet Final Project/Data Pengguna Internet.xlsx")
+```
+```{r}
+library(FSA)
+library(knitr)
+library(dplyr)
+headtail (datapenggunainternet) %>%
+  kable(digits = 5,
+        align = "c",
+        col.names = c("Provinsi", "SD", "SMP", "SMA", "Perguruan Tinggi (PT)"),
+        caption = "**Tabel 2. Data Jumlah Persentase Pengguna Internet Berpendidikan SD, SMP, SMA, dan Perguruan Tinggi (PT) per Provinsi 2017**")
+```
+Untuk melakukan analisis *cluster* dengan R, data harus disiapkan dengan ketentuan sebagai berikut:
+
+- Baris merupakan **observasi**, dan **kolom** merupakan variabel (*field*).
+- Setiap data yang ***missing*** atau hilang harus dihilangkan atau diperkirakan.
+- Data yang digunakan harus telah distandarisasi (dengan: di-*scaled*) agar data memiliki satuan yang seragam. Oleh karena itu, perlu dilakukan proses standardisasi data terlebih dahulu ke bentuk ***z-score***.
+```{r, comment=""}
+# Memanggil kembali Dataset Pengguna Internet dari Sub-Bab 2.2.1., kemudian assign dataset ke variabel df dari variabel datapenggunainternet sebelumnya
+df <- datapenggunainternet
+```
+1. Untuk menghilangkan *missing values* yang mungkin ada dalam dataset yang dipakai, dengan menggunakan perintah berikut:
+
+```{r, comment=""}
+df <- na.omit(object = df)
+```
+2. Melakukan standarisasi data atau *scaling* agar data memiliki satuan yang seragam. Dilakukan proses standardisasi data terlebih dahulu ke bentuk *z-score* dengan fungsi **`scale()`**, berikut perintahnya:
+```{r, comment=""}
+# Standarisasi data pada kolom ke-2 sampai kolom ke-5
+df <- scale(df[,2:5])
+```
+
+```{r, comment=""}
+# Menampilkan 3 data teratas dan terbawah dari Data Pengguna Internet yang telah distandarisasi ke bentuk Z-Score
+headtail(df) %>%
+  kable(digits = 4,
+        align = "c",
+        col.names = c("SD", "SMP", "SMA", "PT"),
+        caption = "**Tabel 3. Data Pengguna Internet yang Telah Distandarisasi ke dalam Bentuk *Z-Score***")
+```
+Proses yang terjadi dalam fungsi **`scale()`** adalah menghitung rata-rata (*mean*) dan standar deviasi dari seluruh vektor yaitu dataset Penggunan Internet atau variabel **`df`**, lalu **menskalakan** setiap elemen dengan nilai-nilai tersebut dengan mengurangi ***mean*** dan membaginya dengan ***sd***.
+
+$$
+\begin{aligned}
+z &= \frac{x - \bar{X}}\sigma
+\end{aligned}
+\tag{1}
+$$
+Dimana:
+
+* $z$ : Nilai data setelah distandarisasi
+* $x$ : Nilai data asli
+* $\bar{X}$ : Nilai rata-rata keseluruhan data
+* $\sigma$ : Simpangan baku
+
+Berikut contoh prosesnya:
+```{r, comment=""}
+# Scaling secara manual kolom Tingkat Pendidikan SD
+scl <- (datapenggunainternet$SD - mean(datapenggunainternet$SD)) / sd(datapenggunainternet$SD)
+head(scl, 5)
+```
+Terlihat output diatas, hasilnya sama dengan kolom tingkat pendidikan **SD** dari variabel **`df`** yang sudah dihitung dengan fungsi **`scale()`**.
+
+# Menentukan Ukuran Kemiripan Antar Data atau Objek
+
+## Definisi
+Dalam analisis cluster diperlukan beberapa ukuran untuk mengetahui seberapa mirip objek-objek yang akan dikelompokan ke dalam cluster yang sama. Terdapat beberapa metode yang digunakan dalam mengukur kemiripan / kesamaan antar objek yaitu:
+
+### Ukuran Jarak
+
+Ada dua metode klasik yang digunakan mengukur jarak yaitu *Euclidean* dan *Manhattan distances*, yang berumus seperti berikut:
+
+1. ***Euclidean Distance***
+
+$$
+\begin{aligned}
+d_{euc} (x,y) &= \sqrt{\sum^{n}_{i=1}(x_i - y_i)^2}
+\end{aligned}
+\tag{2}
+$$
+
+2. ***Manhattan Distance***
+
+$$
+\begin{aligned}
+d_{man} (x,y) &= {\sum^{n}_{i=1}{|(x_i - y_i)}|}
+\end{aligned}
+\tag{3}
+$$
+Dimana, $x$ dan $y$ adalah dua vektor dengan panjang $n$.
+
+
+
+### Ukuran Korelasi
+
+Ada pengukur untuk ketidaksamaan (*dissimilarity*) lainnya seperti jarak berbasis korelasi atau *correlation-based distances*. Jarak berbasis korelasi didefinisikan dengan mengurangkan koefisien korelasi dari 1. Berbagai jenis metode korelasi dapat digunakan sebagai berikut:
+
+1. ***Pearson Correlation Distance***
+
+$$
+\begin{aligned}
+d_{cor} (x,y) &= 1 - {\frac{\sum^{n}_{i=1}(x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum^{n}_{i=1}(x_i - \bar{x})^2} \sum^{n}_{i=1}(y_i - \bar{y})^2}}
+\end{aligned}
+\tag{4}
+$$
+Korelasi *Pearson* mengukur derajat hubungan linier antara dua profil.
+
+* Analisis Korelasi *Pearson* adalah metode yang paling umum dan sering digunakan. Metode ini juga dikenal dengan *parametric correlation* yang tergantung pada ditribusi atau penyebaran data.
+
+2. ***Eisen cosine Correlation Distance*** 
+
+Ini adalah kasus khusus korelasi Pearson dengan $\bar{x}$ dan $\bar{y}$ keduanya diganti dengan nol (Eisen, *et al*., 1998):
+
+$$
+\begin{aligned}
+d_{eisen} (x,y) &= 1 - {\frac{|\sum^{n}_{i=1}x_i y_i|} {\sqrt{{\sum^{n}_{i=1}x_i^2} \sum^{n}_{i=1}y_i^2}}}
+\end{aligned}
+\tag{5}
+$$
+
+3. ***Spearman Cosine Correlation Distance*** 
+
+Metode korelasi *Spearman* menghitung korelasi antara pangkat $x$ dan pangkat variabel $y$.
+
+$$
+\begin{aligned}
+d_{spear} (x,y) &= 1 - {\frac{\sum^{n}_{i=1}{(x'_i - \bar x')}{(y'_i - \bar y'_i)}} {\sqrt{{\sum^{n}_{i=1}{(x'_i - \bar x')^2}} \sum^{n}_{i=1}{(y'_i - \bar y')^2}}}}
+\end{aligned}
+\tag{6}
+$$
+Dimana $x'_i = rank(x_i)$ dan $y'_i = rank(y)$.
+
+4. ***Kendall Cosine Correlation Distance*** 
+
+Metode korelasi Kendall mengukur korespondensi atau kecocokan antara pemeringkatan variabel $x$ dan $y$. Jumlah total kemungkinan pemasangan observasi $x$ dengan $y$ adalah $n(n−1)/2$, di mana n adalah ukuran dari $x$ dan $y$. Mulai dengan mengurutkan pasangan $(x, y)$ dengan nilai $x$. Jika $x$ dan $y$ berkorelasi, maka mereka akan memiliki urutan peringkat relatif yang sama. Lalu, untuk setiap $y_i$, hitung banyaknya $y_j>y_i$ (kesusaian pasangan (**c**)) dan banyaknya $y_j<y_i$ (ketidaksesuaian pasangan (**d**)).
+
+Jarak korelasi Kendall didefinisikan sebagai berikut:
+
+$$
+\begin{aligned}
+d_{kend} (x,y) &= 1 - {\frac{n_c - n_d} {\frac{1}{2}n(n-1)}}
+\end{aligned}
+\tag{7}
+$$
+Dimana:
+
+* $n_c$ : Jumlah kesesuaian pasangan (*concordant*)
+* $n_d$ : Jumlah ketidaksesuaian pasangan (*discordant*)
+* $n$   : Ukuran $x$ dan $y$
+
+*Notes*:
+
+- *Kendall* dan *Speaman* adalah korelasi *non-parametric* dan mereka digunakan untuk melakukan analisis korelasi berbasis peringkat (*rank-based correlation*).
+
+## Perhitungan Jarak *Matrix*
+
+Untuk percobaan perhitungan kali ini menggunakan dataset ***Data Jumlah Persentase Pengguna Internet Berpendidikan SD, SMP, SMA, dan Perguruan Tinggi (PT) per Provinsi 2017***. Data yang diambil akan di-*subset* atau hanya menggunakan 20 baris acak yang diambil dari 34 baris yang ada. Perintah *subset* dilakukan dengan fungsi **`sample()`**. Selanjutnya, dilakukan *standardized* data yang diambil dengan fungsi **`scale()`**.
+
+```{r}
+set.seed(123)
+
+ss <- sample(1:34, 20)
+df <- datapenggunainternet[ss, ]
+df.scaled <- scale(df[,2:5])
+
+print(df.scaled)
+```
+Dimana:
+
+* **`set.seed(123)`** : Fungsi yang digunakan untuk menentukan *seed*/*Random Number Generator* (RNG) agar data/keacakan sesuatu dapat diatur sehingga antara percobaan pertema dan seterusnya menggunakan data acak yang sama.
+* **`datapenggunainternet[ss, ]`** : Semua baris di dalam dataset Pengguna Internet mengikuti kondisi yang sesuai pada variabel `ss`, kecuali kolom/*field*-nya.
+* **`scale(df[,2:5])`** : Fungsi `scale()` akan menghitung *mean* dan standar deviasi dari seluruh variabel `df`, lalu menskalakan setiap elemen dengan nilai-nilai hasil tersebut yaitu mengurangi dengan *mean* dan membaginya dengan *sd*. Sebagai contoh perhitungan manualnya di bawah ini.
+
+
+```{r}
+x <- df$SD            # Mengambil semua baris pada kolom SD
+(x - mean(x)) / sd(x) # Rumus manual fungsi scale()
+```
+### Menghitung Jarak *Euclidean*
+Untuk menghitungnya, kita dapat menggunakan fungsi **`dist()`**.
+
+* **`dist()`** : Fungsi dari paket `stats`. Hanya menerima tipe data numerik sebagai *input*-an.
+
+```{r}
+dist.eucl <- dist(df.scaled, method = "euclidean")
+```
+Dari argumen `method` juga dapat menerima metode lain, diantaranya seperti: `“euclidean”`, `“maximum”`, `“manhattan”`, `“canberra”`, `“binray”`, `“minkowski”`.
+
+Untuk memudahkan dalam melihat jarak yang dihasilkan oleh fungsi **`dist()`**, kita bisa format ulang vektor jaraknya ke bentuk matriks menggunakan fungsi **`as.matrix()`**.
+```{r}
+# Menampilkan matriks 5x5 dari perhitungan jarak Euclidean
+round(as.matrix(dist.eucl)[1:5, 1:5], 1)
+```
+Hasil matriks diatas, nilai merepresentasikan jarak antar objek. Nilai-nilai pada diagonal matriks mewakili jarak antara objek dan dirinya sendiri (yang bernilai nol: 0.0, 0.0, 0.0).
+
+Dimana:
+
+* **`round(..., 1)`** : Fungsi ini membulatkan nilai dengan menetapkan satu bilangan setelah koma.
+* **`as.matrix()`** : Fungsi untuk mengkonversi ke bentuk matriks.
+* **`(dist.eucl)[1:5, 1:5]`** : Mengambil baris 1 sampai 5 dan kolom 1 sampai 5 dari variabel `dist.eucl`.
+
+### Visualisasi Jarak *Matrix*
+
+Untuk memvisualisasikan *matrix* jarak adalah dengan menggunakan fungsi **`fviz_dist()`** dari *packages* **`factoextra`**.
+```{r}
+library(factoextra)
+
+fviz_dist(dist.eucl)
+```
+Dimana untuk *heatmap* diatas:
+
+* **Merah** (Warna *Orange* Tua) yaitu tingkat kesamaan yang tinggi.
+* **Biru** yaitu tingkat kesamaan yang rendah.
+
+Tingkat warna sebanding dengan nilai ketidaksamaan antara hasil pengamatan: **Merah** jika $dist(x_i,x_j) = 0$ dan **Biru** sesuai dengan nilai tertinggi jarak *euclidean* yang dihitung (lihat bagian ***legend value***). Objek yang termasuk dalam cluster yang sama ditampilkan secara berurutan.
+
+# HASIL DAN PEMBAHASAN
+
+## *Packages* atau *Library* yang Digunakan
+```{r}
+library(cluster)        # Perhitungan atau komputasi algoritma clustering
+library(factoextra)     # Visualisasi hasil dari clustering
+library(readxl)         # Import dataset dari file excel
+library(FSA)            # Head & Tail
+library(knitr)          # Mencetak tabel
+library(dplyr)          # Data Processing
+```
+## Persiapan Data
+
+Data yang digunakan sama seperti sub-bab **2.2** yaitu data persentase siswa umur 5-24 tahun yang mengakses internet selama 3 Bulan terakhir menurut Provinsi dan Jenjang Pendidikan, 2017 (Perkotaan + Perdesaan) di Indonesia.
+```{r}
+datapenggunainternet <- read_excel("D:/Mata Kuliah Semester VI/Komputasi Statistika/Praktikum Komstat/Tugas Akhir Praktikum Analisis Cluster/Analisis Cluster Data Internet Final Project/Data Pengguna Internet.xlsx")
+df <- datapenggunainternet
+df <- na.omit(object = df)
+df <- scale(df[ ,2:5])
+headtail(df) %>%
+  kable(digits = 4,
+        align = "c",
+        col.names = c("SD", "SMP", "SMA", "PT"),
+        caption = "**Tabel 4. Data Pengguna Internet yang Telah Distandarisasi ke dalam Bentuk *Z-Score***")
+```
+## *K-Means Clustering*
+
+*K-Means* adalah teknik pengelompokan atau *clustering* yang membagi kumpulan data menjadi sekumpulan *k* grup, dimana *k* adalah jumlah grup yang sudah ditentukan sebelumnya.
+
+### Menentukan Jumlah *Cluster* yang Optimal
+Untuk menentukan jumlah *cluster* yang optimal dengan menggunakan fungsi **`fviz_nbclust()`**.
+```{r}
+fviz_nbclust(x = df, FUNcluster = kmeans, method = "wss")
+```
+Penentuan *k* optimal dengan melihat pergerakan grafik yang landai setelah grafik curam. Dari gambar diatas, grafik landai setelah banyaknya *k* ke-**2** sampai ke-**3**.
+Berdasarkan output diatas diduga bahwa jumlah *cluster* atau *k* optimal  yang disarankan menurut metode **`"wss"`** adalah **3**.
+Maka, untuk *k* optimal yang dipakai pada tugas kali ini adalah **3**.
+
+Dimana penjelasan *code* diatas yaitu:
+
+* **`fviz_nbclust()`** : Fungsi yang menentukan dan memvisualisasikan jumlah cluster yang optimal.
+* **`x = df`** : Variabel `x` untuk memanggil dataframe `df`.
+* **`FUNcluster = kmeans`** : Parameter partisi atau yang berfungsi untuk membagi *cluster*
+* **`method = "wss"`** : Metode yang digunakan untuk memperkirakan jumlah *cluster* dapat juga menggunakan `"silhouette"` atau `"gap_stat"`.
+
+### Menghitung dan Visualisasi *K-Means Clustering*
+
+Analisis *cluster* dapat dilakukan dengan fungsi **`kmeans()`** dan menggunakan data yang telah distandardisasi.
+```{r}
+set.seed(123)
+
+km.result <- kmeans(x = df, centers = 3, nstart = 25)
+
+str(km.result)        #Menampilkan struktur variabel km.result
+
+km.result$cluster     #Menampilkan hasil K-Means Cluster dari 34 Provinsi yang menjadi 3 Cluster
+
+fviz_cluster(object = km.result, data = df, palette = "viridis", ggtheme = theme_gray())
+```
+Dimana penjelasan *code* diatas yaitu:
+
+* **`kmeans()`** : Proses *Clustering* pada data matriks dengan perhitungan *K-Means*.
+* **`x = df`** : Variabel `x` untuk memanggil dataframe `df`.
+* **`centers = 3`** : Jumlah *k* atau *cluster* yang didapat atau diinginkan.
+* **`nstart = 25`** : Jumlah *random sets* yang dipilih (berlaku hanya jika parameter `center` berisi angka)
+* **`fviz_cluster()`** : Fungsi untuk memvisualisasikan hasil *clustering*.
+* **`object = km.result`** : Objek yang berisi hasil partisi dari fungsi **`kmeans()`**.
+* **`data = df`** : `df` adalah data yang sudah digunakan untuk *clustering*. Ini hanya digunakan bila objeknya berbentuk *class* yang terlihat seperti di akhir baris dari kode **`str(km.result)`** diatas.
+* **`ggtheme = theme_gray()`** : Tema yang disediakan *packages* `ggplot2`. Terdapat beberapa pilihan seperti `theme_minimal()`, `theme_classic()`, dan lain-lain.
+
+### Mengembalikan Nilai Centroid
+
+Nilai *mean/centroid* yang termuat masih dalam nilai yang distandardisasi, maka nilainya perlu dikembalikan ke nilai awal untuk mengidentifikasi karakteristik sebenarnya dari tiap *cluster*.
+```{r}
+nilai.centroid <- datapenggunainternet %>%
+  mutate(Cluster = km.result$cluster) %>%
+  group_by(Cluster) %>%
+  summarise(Mean_SD = mean(SD), Mean_SMP = mean(SMP), Mean_SMA = mean(SMA), Mean_PT = mean(PT))
+```
+* Untuk mempermudah melihat karakteristik tiap *cluster* dari nilai centroid akan dibentuk Tabel berikut:
+```{r}
+nilai.centroid %>%
+ kable(digits = 5,
+        align = "c",
+        col.names = c("Cluster", "Mean_SD", "Mean_SMP", "Mean_SMA", "Mean_PT"),
+        caption = "**Tabel 5. Nilai Centroid Tiap Cluster**")
+```
+
+
+### Pengelompokkan Objek ke dalam *Cluster*
+
+Pengelompokkan objek ke dalam *cluster* yang terbentuk dapat dilihat dari *code* berikut:
+```{r}
+final.kmeans <- datapenggunainternet %>%
+  mutate(Cluster = km.result$cluster) %>%
+  select(`Provinsi`, Cluster) %>%
+  arrange(Cluster)
+```
+* Untuk mempermudah pengelompokkan objek ke dalam *cluster* dibuat Tabel berikut:
+```{r}
+final.kmeans %>%
+  kable(digits = 2,
+        align = "c",
+        col.names = c("Provinsi", "Cluster"),
+        caption = "**Tabel 6. Hasil Pengelompokkan Objek ke dalam Cluster**")
+```
+Dari Tabel 6. didapatkan hasil sebagai berikut:
+
+- ***Cluster*** **1** : Sumatera Utara, Sumatera Barat, Riau, Jambi, Sumatera Selatan, Bengkulu, Lampung, Kep. Bangka Belitung, Banten, Kalimantan Barat, Kalimantan Tengah, Kalimantan Utara, Sulawesi Utara, Sulawesi Tengah, Sulawesi Selatan, Sulawesi Tenggara, & Gorontalo
+- ***Cluster*** **2** : Kepulauan Riau, DKI Jakarta, Jawa Barat, Jawa Tengah, DI Yogyakarta, Jawa Timur, Bali, Kalimantan Selatan, & Kalimantan Timur
+- ***Cluster*** **3** : Aceh, Nusa Tenggara Barat, Nusa Tenggara Timur, Sulawesi Barat, Maluku, Maluku Utara, Papua Barat, & Papua
+
+# Kesimpulan
+
+## Hasil Akhir *K-Means Clustering*
+
+- Untuk mempermudah dalam menginterpretasikan hasil ***K-Means Clustering*** akan dibuat Tabel berikut:
+```{r}
+# Memanggil & menampilkan hasil clustering Tabel 6. yang dikelompokkan per Cluster, kemudian menggabungkannya dengan Tabel 5. Nilai Centroid untuk mempermudah interpretasi
+tabelfinal.kmeans <- read_excel("D:/Mata Kuliah Semester VI/Komputasi Statistika/Praktikum Komstat/Tugas Akhir Praktikum Analisis Cluster/Analisis Cluster Data Internet Final Project/Tabel 7. Hasil K-Means Clustering.xlsx")
+tabelFINAL <- as.data.frame(c(nilai.centroid, tabelfinal.kmeans[,2]))
+tabelFINAL %>%
+kable(digits = 6,
+        align = "c",
+        col.names = c("Cluster", "Mean_SD", "Mean_SMP", "Mean_SMA", "Mean_PT", "Provinsi"),
+        caption = "**Tabel 7. Nilai Centroid & Hasil Pengelompokkan Objek Tiap Cluster**")
+```
+Berdasarkan Tabel 7. di atas dapat diketahui bahwa *Cluster* 1 terdiri dari 17 Provinsi, *Cluster* 2 terdiri dari 9 Provinsi, & *Cluster* 3 terdiri dari 8 Provinsi.
+
+Untuk mengetahui provinsi-provinsi dengan persentase pengguna internet yang tinggi, sedang atau rendah dapat dilihat dari rata-rata keseluruhan variabel pada tiap *cluster* yang terbentuk. Berikut merupakan rata- rata keseluruhan variabel pada tiap *cluster*.
+```{r}
+# Membuat variabel baru untuk mendapatkan rata-rata persentase tiap Cluster dengan menjumlahkan rata-rata per Cluster berdasarkan jenjang pendidikan, kemudian dibagi 4 atau banyaknya variabel jenjang pendidikan (SD, SMP. SMA, & PT)
+cluster1 <- (tabelFINAL[1,2] + tabelFINAL[1,3] + tabelFINAL[1,4] + tabelFINAL[1,5])/4
+
+cluster2 <- (tabelFINAL[2,2] + tabelFINAL[2,3] + tabelFINAL[2,4] + tabelFINAL[2,5])/4
+
+cluster3 <- (tabelFINAL[3,2] + tabelFINAL[3,3] + tabelFINAL[3,4] + tabelFINAL[3,5])/4
+
+nilaimean <- c(cluster1, cluster2, cluster3)
+rata.all <- as.data.frame(cbind(tabelFINAL$Cluster, nilaimean))
+rata.all %>%
+  kable(digits = 2,
+        align = "c",
+        col.names = c("Cluster", "Rata-Rata"),
+        caption = "**Tabel 8. Rata-Rata Persentase Jumlah Pengguna Internet Tahun 2017**")
+```
+
+## Interpretasi
+* ***Cluster*** **1** : *Cluster* 1 memiliki rata-rata persentase jumlah pengguna internet menurut jenjang pendidikan cukup tinggi yaitu sebesar **55.46**. Hal tersebut menunjukkan bahwa pada tahun 2017 provinsi pada *cluster* 1 menjadi provinsi dengan persentase jumlah pengguna internet menurut jenjang pendidikannya **sedang**. Dapat disimpulkan provinsi pada *cluster* 1 merupakan daerah yang memiliki infrastruktur cukup baik (cukup memadai) untuk mendukung penggunaan internet.
+* ***Cluster*** **2** : *Cluster* 2 memiliki rata-rata persentase jumlah pengguna internet menurut jenjang pendidikan tertinggi yaitu sebesar **68.16**. Hal tersebut menunjukkan bahwa pada tahun 2017 provinsi pada *cluster* 2 menjadi provinsi dengan persentase jumlah pengguna internet menurut jenjang pendidikannya **tinggi**. Dapat disimpulkan provinsi pada *cluster* 2 merupakan daerah yang memiliki infrastruktur baik (memadai) untuk mendukung penggunaan internet.
+* ***Cluster*** **3** : *Cluster* 3 memiliki rata-rata persentase jumlah pengguna internet menurut jenjang pendidikan terendah yaitu sebesar **40.91**. Hal tersebut menunjukkan bahwa pada tahun 2017 provinsi pada *cluster* 3 menjadi provinsi dengan persentase jumlah pengguna internet menurut jenjang pendidikannya **rendah**. Dapat disimpulkan provinsi pada *cluster* 3 merupakan daerah yang memiliki infrastruktur kurang baik (kurang memadai) untuk mendukung penggunaan internet.
+
+> Dari uraian interpretasi di atas, dapat diketahui bahwa urutan *cluster* provinsi dengan persentase jumlah pengguna internet menurut jenjang pendidikan tertinggi sampai terendah yaitu ***Cluster*** **2**, ***Cluster*** **1**, & ***Cluster*** **3**.
+
+# DAFTAR PUSTAKA
+
+Amalia, D., & Sumargo, B. (2019). Pengelompokan Pengguna Internet dengan Metode *K-Means Clustering*. *Jurnal Statistika dan Aplikasinya*, 3(1), 1-12, doi: https://doi.org/10.21009/JSA.03101.
+
+Murakami, Akira. (2015, Oktober 08). *Clustering Methods With* R. Diakses pada Mei 18, 2022, dari http://rstudio-pubs-static.s3.amazonaws.com/116139_6d44f83bd0be4d9fbd0e745dae7aeb3f.html.
+
+Prabowo, R. A., Nisa, K., Faisol, A., & Setiawan, E. (2020). Simulasi Pemilihan Metode Analisis *Cluster* Hirarki *Agglomerative* Terbaik Antara *Average Linkage* dan *Ward* Pada Data Yang Mengandung Masalah Multikolinearitas. *Jurnal Siger Matematika*, 1(2), 49-55, doi: http://dx.doi.org/10.23960%2Fjsm.v1i2.2497.
+
+Suhartono., & Wahyu, Muhammad Andryan. (2021, November 23). Analisis Klaster Indikator Kesehatan Pulau Jawa. Diakses pada Mei 18, 2022, dari https://rpubs.com/andryan-uinmaliki/838727.
+
+
+> ***Contact Me for Details***: 
+> [Herdika Diky Anto](https://linktr.ee/herdikadiky)
